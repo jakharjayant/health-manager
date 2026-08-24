@@ -37,4 +37,4 @@ export default function Register() {
       </form>
     </div>
   );
-}\n
+}
