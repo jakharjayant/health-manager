@@ -1,0 +1,99 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String    @id @default(uuid())
+  role          String    // ADMIN, DOCTOR, PATIENT
+  email         String    @unique
+  passwordHash  String
+  name          String
+
+  doctorProfile DoctorProfile?
+  leaves        DoctorLeave[]
+  
+  patientAppointments Appointment[] @relation("PatientAppointments")
+  doctorAppointments  Appointment[] @relation("DoctorAppointments")
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model DoctorProfile {
+  id                 String  @id @default(uuid())
+  userId             String  @unique
+  user               User    @relation(fields: [userId], references: [id])
+  specialization     String
+  workingHoursStart  String  // e.g. "09:00"
+  workingHoursEnd    String  // e.g. "17:00"
+  slotDurationMins   Int     // e.g. 30
+}
+
+model DoctorLeave {
+  id       String   @id @default(uuid())
+  doctorId String
+  doctor   User     @relation(fields: [doctorId], references: [id])
+  date     String   // YYYY-MM-DD
+
+  @@unique([doctorId, date])
+}
+
+model Appointment {
+  id              String   @id @default(uuid())
+  patientId       String
+  patient         User     @relation("PatientAppointments", fields: [patientId], references: [id])
+  doctorId        String
+  doctor          User     @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  
+  date            String   // YYYY-MM-DD
+  startTime       String   // HH:mm
+  endTime         String   // HH:mm
+  
+  status          String   // PENDING, BOOKED, CANCELLED, COMPLETED
+  
+  @@unique([doctorId, date, startTime]) // Prevent double booking
+
+  preVisitSummary  PreVisitSummary?
+  postVisitSummary PostVisitSummary?
+
+  calendarEventId String? 
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model PreVisitSummary {
+  id              String      @id @default(uuid())
+  appointmentId   String      @unique
+  appointment     Appointment @relation(fields: [appointmentId], references: [id])
+  symptomsRaw     String
+  urgencyLevel    String      
+  chiefComplaint  String
+  questions       String      
+}
+
+model PostVisitSummary {
+  id                 String      @id @default(uuid())
+  appointmentId      String      @unique
+  appointment        Appointment @relation(fields: [appointmentId], references: [id])
+  clinicalNotesRaw   String
+  patientSummary     String
+  medicationSchedule String
+  followUpSteps      String
+  
+  reminders          MedicationReminder[]
+}
+
+model MedicationReminder {
+  id                 String           @id @default(uuid())
+  postVisitSummaryId String
+  postVisitSummary   PostVisitSummary @relation(fields: [postVisitSummaryId], references: [id])
+  medicationName     String
+  frequency          String 
+  nextReminder       DateTime
+  status             String 
+}
