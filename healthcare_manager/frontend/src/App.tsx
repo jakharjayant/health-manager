@@ -29,4 +29,4 @@ function App() {
     </AuthProvider>
   );
 }
-export default App;\n
+export default App;
