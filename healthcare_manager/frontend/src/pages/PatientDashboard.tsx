@@ -93,4 +93,4 @@ export default function PatientDashboard() {
       </div>
     </div>
   );
-}\n
+}
