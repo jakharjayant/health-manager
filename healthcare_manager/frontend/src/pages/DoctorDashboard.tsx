@@ -83,4 +83,4 @@ export default function DoctorDashboard() {
       </div>
     </div>
   );
-}\n
+}
